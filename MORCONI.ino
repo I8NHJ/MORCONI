@@ -23,8 +23,7 @@ AudioConnection patchCord0 (SideTone, Speaker);
 
 /* ETHERNET CHANNELS AND BUFFERS */
 EthernetClient RadioTCPChannel;
-String RadioTCPBuffer;
-//char MyHandle[]={"00000000"};
+//String RadioTCPBuffer;
 String ConnectionHandle="";
 String ClientHandle="";
 
