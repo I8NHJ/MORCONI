@@ -8,8 +8,8 @@
   FLEXIP
   FLEXPORT
   FLEXDELAY           default 3000
-  STATIC IP           default FALSE
   TEENSYDEBUG         default FALSE
+  STATIC IP           default FALSE
   TEENSYIP
   TEENSYGATEWAY
   TEENSYMASK
@@ -18,27 +18,27 @@
 void getConfigFile() {
   if (!SD.begin(chipSelect)) {
     #ifdef CONFIG_DEBUG 
-      debugln("SD initialization failed!");
+      Serial.println("SD initialization failed!");
     #endif
     return;
   }
   else {
     #ifdef CONFIG_DEBUG 
-      debugln("SD initialization success.");
+      Serial.println("SD initialization success.");
     #endif
   }
 
   ConfigFile = SD.open("MORCONI.cfg");
   if (ConfigFile) {
     #ifdef CONFIG_DEBUG 
-      debugln("Reading MORCONI.cfg");
+      Serial.println("Reading MORCONI.cfg");
     #endif
     while (ConfigFile.available()) {
       Rchar = ConfigFile.read();
       InBuf += String(Rchar);
       if (Rchar == 10 || ConfigFile.available() <= 0) {
         #ifdef CONFIG_DEBUG
-          debug("Config Line: "); debug(InBuf);
+          Serial.print("Config Line: "); Serial.print(InBuf);
         #endif
         ParseInBuf();
         InBuf = "";
@@ -48,7 +48,7 @@ void getConfigFile() {
   }
   else {
     #ifdef CONFIG_DEBUG
-      debugln("Error opening MORCONI.cfg");
+      Serial.println("Error opening MORCONI.cfg");
     #endif
   }
 }
@@ -67,7 +67,7 @@ void ParseInBuf() {
     tmpStr       = InBuf.substring(InBuf.indexOf("STARTUP DELAY:") + 15);
     StartUpDelay = tmpStr.toInt();
     #ifdef CONFIG_DEBUG
-      debug("Parsed StartUpDelay: "); debugln(StartUpDelay);
+      Serial.print("Parsed StartUpDelay: "); Serial.println(StartUpDelay);
     #endif
     return;
   }
@@ -75,14 +75,14 @@ void ParseInBuf() {
     tmpStr      = InBuf.substring(InBuf.indexOf("DEBOUNCE:") + 10);
     Debounce = tmpStr.toInt();
     #ifdef CONFIG_DEBUG
-      debug("Parsed Debounce: "); debugln(Debounce);
+      Serial.print("Parsed Debounce: "); Serial.println(Debounce);
     #endif
     return;
   }
   if (InBuf.indexOf("SIDETONE:") >= 0 && InSetup) {
     SidetoneActive = InBuf.substring(InBuf.indexOf("SIDETONE:") + 10).trim() == "ON";
     #ifdef CONFIG_DEBUG
-      debug("Parsed Sidetone: "); debugln(SidetoneActive);
+      Serial.print("Parsed Sidetone: "); Serial.println(SidetoneActive);
     #endif
     return;
   }
@@ -92,7 +92,7 @@ void ParseInBuf() {
     if (SidetoneFrequency < 100.0) {SidetoneFrequency = 100.0;}
     if (SidetoneFrequency > 2000.0) {SidetoneFrequency = 2000.0;}
     #ifdef CONFIG_DEBUG
-      debug("Parsed SidetoneFrequency: "); debugln(SidetoneFrequency);
+      Serial.print("Parsed SidetoneFrequency: "); Serial.println(SidetoneFrequency);
     #endif
     return;
   }
@@ -102,7 +102,7 @@ void ParseInBuf() {
     if (SidetoneVolume < 0.0) {SidetoneVolume = 0.0;}
     if (SidetoneVolume > 1.0) {SidetoneVolume = 1.0;}
     #ifdef CONFIG_DEBUG
-      debug("Parsed SidetoneVolume: "); debugln(SidetoneVolume);
+      Serial.print("Parsed SidetoneVolume: "); Serial.println(SidetoneVolume);
     #endif
     return;
   }
@@ -111,7 +111,7 @@ void ParseInBuf() {
     ParseIP(InBuf, FlexIP);
     RadioIP = {FlexIP[0], FlexIP[1], FlexIP[2], FlexIP[3]};
     #ifdef CONFIG_DEBUG
-      debugf4("Parsed FlexIP:  %u.%u.%u.%u\n", FlexIP[0],FlexIP[1],FlexIP[2],FlexIP[3]);
+      Serial.printf("Parsed FlexIP:  %u.%u.%u.%u\n", FlexIP[0],FlexIP[1],FlexIP[2],FlexIP[3]);
     #endif
     return;
   }
@@ -119,7 +119,7 @@ void ParseInBuf() {
     tmpStr = InBuf.substring(InBuf.indexOf("FLEXPORT:") + 10);
     FlexPort = tmpStr.toInt();
     #ifdef CONFIG_DEBUG
-      debug("Parsed FlexPort: "); debugln(FlexPort);
+      Serial.print("Parsed FlexPort: "); Serial.println(FlexPort);
     #endif
     return;
   }
@@ -127,21 +127,21 @@ void ParseInBuf() {
     tmpStr       = InBuf.substring(InBuf.indexOf("FLEXDELAY:") + 11);
     StartUpDelay = tmpStr.toInt();
     #ifdef CONFIG_DEBUG
-      debug("Parsed FlexDelay: "); debugln(FlexDelay);
+      Serial.print("Parsed FlexDelay: "); Serial.println(FlexDelay);
     #endif
     return;
   }
   if (InBuf.indexOf("TEENSYDEBUG:") >= 0 && InSetup) {
     TeensyDebug = InBuf.substring(InBuf.indexOf("TEENSYDEBUG:") + 13).trim() == "TRUE";
     #ifdef CONFIG_DEBUG
-      debug("Parsed Teensy Debug: "); debugln(TeensyDebug);
+      Serial.print("Parsed Teensy Debug: "); Serial.println(TeensyDebug);
     #endif
     return;
   }
     if (InBuf.indexOf("STATIC IP:") >= 0 && InSetup) {
     StaticIP = InBuf.substring(InBuf.indexOf("STATIC IP:") + 11).trim() == "TRUE";
     #ifdef CONFIG_DEBUG
-      debug("Parsed Static IP: "); debugln(StaticIP);
+      Serial.print("Parsed Static IP: "); Serial.println(StaticIP);
     #endif
     return;
   }
@@ -149,7 +149,7 @@ void ParseInBuf() {
     InBuf = InBuf.substring(InBuf.indexOf("TEENSYIP:") + 10);
     ParseIP(InBuf, CfgIP);
     #ifdef CONFIG_DEBUG
-      debugf4("Parsed CfgIP:  %u.%u.%u.%u\n", CfgIP[0], CfgIP[1], CfgIP[2], CfgIP[3]);
+      Serial.printf("Parsed CfgIP:  %u.%u.%u.%u\n", CfgIP[0], CfgIP[1], CfgIP[2], CfgIP[3]);
     #endif
     return;
   }
@@ -157,7 +157,7 @@ void ParseInBuf() {
     InBuf = InBuf.substring(InBuf.indexOf("TEENSYGATEWAY:") + 15);
     ParseIP(InBuf, CfgGateway);
     #ifdef CONFIG_DEBUG
-      debugf4("Parsed MyGateway:  %u.%u.%u.%u\n", CfgGateway[0], CfgGateway[1], CfgGateway[2], CfgGateway[3]);
+      Serial.printf("Parsed MyGateway:  %u.%u.%u.%u\n", CfgGateway[0], CfgGateway[1], CfgGateway[2], CfgGateway[3]);
     #endif
     return;
   }
@@ -165,7 +165,7 @@ void ParseInBuf() {
     InBuf = InBuf.substring(InBuf.indexOf("TEENSYMASK:") + 12);
     ParseIP(InBuf, CfgMask);
     #ifdef CONFIG_DEBUG
-      debugf4("Parsed MyMask:  %u.%u.%u.%u\n", CfgMask[0], CfgMask[1], CfgMask[2], CfgMask[3]);
+      Serial.printf("Parsed MyMask:  %u.%u.%u.%u\n", CfgMask[0], CfgMask[1], CfgMask[2], CfgMask[3]);
     #endif
     return;
   }

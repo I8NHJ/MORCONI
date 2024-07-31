@@ -4,7 +4,7 @@ void getIpAddress()
   uint8_t St=0;
   // start the Ethernet connection:
   if (TeensyDebug){
-    debugln("=== Waiting for IP address");
+    Serial.println("=== Waiting for IP address");
   }
   teensyMAC(MyMAC);  // Get MAC address from Teensy
 
@@ -14,13 +14,13 @@ void getIpAddress()
     Ethernet.begin(MyMAC, MyIP, MyDNS, MyGateway, MyMask);
   }
   else {
-    while (Ethernet.begin(MyMAC, 6000) == 0) {
+    while (Ethernet.begin(MyMAC) == 0) {
       if (millis() - TimeIt > 10000)  { // Ten seconds to get a DHCP served address
         if (TeensyDebug) {
-          debugln("Failed to configure Ethernet using DHCP");
-          debug("link Status: "); debugln(Ethernet.linkStatus());
-          debug("hardware Status: "); debugln(Ethernet.hardwareStatus());
-          debug("socket Status: "); debugln(String(Ethernet.socketStatus(St)));
+          Serial.println("Failed to configure Ethernet using DHCP");
+          Serial.print("link Status: "); Serial.println(Ethernet.linkStatus());
+          Serial.print("hardware Status: "); Serial.println(Ethernet.hardwareStatus());
+          Serial.print("socket Status: "); Serial.println(String(Ethernet.socketStatus(St)));
        }
       getFixedIpAddress();
       break;
@@ -29,9 +29,9 @@ void getIpAddress()
   }
 
   if (TeensyDebug) {
-    debug("link Status: "); debugln(Ethernet.linkStatus());
-    debug("hardware Status: "); debugln(Ethernet.hardwareStatus());
-    debug("socket Status: "); debugln(String(Ethernet.socketStatus(St)));
+    Serial.print("link Status: "); Serial.println(Ethernet.linkStatus());
+    Serial.print("hardware Status: "); Serial.println(Ethernet.hardwareStatus());
+    Serial.print("socket Status: "); Serial.println(String(Ethernet.socketStatus(St)));
   }
   MyIP = Ethernet.localIP();
   MyGateway = Ethernet.gatewayIP();
@@ -48,7 +48,7 @@ void getFixedIpAddress() {
 
   // start the Ethernet connection:
   if (TeensyDebug) {
-    debugln("=== Setting fixed IP address");
+    Serial.println("=== Setting fixed IP address");
   }
   if (Ethernet.linkStatus() == 1) {
     Ethernet.begin(MyMAC, MyIP, MyDNS, MyGateway, MyMask);
