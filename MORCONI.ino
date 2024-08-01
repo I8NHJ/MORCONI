@@ -1,9 +1,9 @@
 // MORCONI 
 // MOrse COde Network Interface for 6X00 and 8X00 Flex radio series.
-// N5NHJ Ver 1.0 20240730
+// N5NHJ Ver 1.0 20240731
 //
 
-#define APP_VERSION 20240730
+#define APP_VERSION 20240731
 
 // #define CONFIG_DEBUG                                                   //Uncomment this for debugging the config file 
 
@@ -28,7 +28,7 @@ const int BuiltInLED            = LED_BUILTIN;
 const int KeyInPin              = 0;
 unsigned long CWIndex           = 1;
 unsigned long SEQ               = 1;
-String RadioCommand;
+String RadioCommand             = "";
 bool KeyingStatus               = false;
 bool PreviousKeying             = false;
 bool FlexConnected              = false;
@@ -90,9 +90,9 @@ void setup() {
 
   /**********************************/
   /* Code debugging purpose         */
-  //TeensyDebug = true;
-  //Debounce = 0;
-  //FlexDelay = 1000;
+  // TeensyDebug = true;
+  // Debounce = 5;
+  // FlexDelay = 1000;
   /**********************************/
 
   if (TeensyDebug) {
