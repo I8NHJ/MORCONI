@@ -5,7 +5,8 @@
 
 #define APP_VERSION 20240731
 
-// #define CONFIG_DEBUG                                                   //Uncomment this for debugging the config file 
+#define CONFIG_DEBUG                                                   //Uncomment this for debugging the config file 
+#define NO_RADIO
 
 /* LIBRARIES INCLUSION */
 #include <SD.h>
@@ -14,13 +15,18 @@
 
 /* SIDETONE VARIABLE DEFINITIONS */
 AudioSynthWaveform SideTone;
-AudioOutputPWM Speaker (1,2);                                       
-AudioConnection patchCord0 (SideTone, Speaker);
+AudioEffectFade SideToneFade;
+AudioOutputPWM Speaker (1,2);
+AudioConnection patchCord0 (SideTone, SideToneFade);
+AudioConnection patchCord1 (SideToneFade, Speaker);
+float CommandFrequency          = 600.0;
+int CommandSpeed                = 40;
+int ClickRemovalTime            = 2;
 
 /* ETHERNET CHANNELS AND BUFFERS */
 EthernetClient RadioTCPChannel;
-String ConnectionHandle="";
-String ClientHandle="";
+String ConnectionHandle         = "";
+String ClientHandle             = "";
 
 /* GLOBAL VARIABLE DEFINITIONS */
 const int chipSelect            = BUILTIN_SDCARD;
@@ -78,9 +84,6 @@ void setup() {
   pinMode(BuiltInLED, OUTPUT);
 
   digitalWrite(BuiltInLED, HIGH);
-  
-  AudioMemory (8);
-  SideTone.begin(0.0, SidetoneFrequency, WAVEFORM_SINE);               //Waveforms: SINE, PULSE, SAWTOOTH, SQUARE, TRIANGLE
 
   #ifdef CONFIG_DEBUG
     OpenSerialMonitor();
@@ -88,12 +91,25 @@ void setup() {
 
   getConfigFile();
 
-  /**********************************/
-  /* Code debugging purpose         */
+  /**************************************************/
+  /* Overwriting Config parameters from MORCONI.cfg */
+  /*           for code debugging purpose           */
+  /**************************************************/
   // TeensyDebug = true;
   // Debounce = 5;
   // FlexDelay = 1000;
+  SidetoneFrequency=432; // A4 (LA3)
   /**********************************/
+
+  AudioMemory (2);
+  SideToneFade.fadeOut(ClickRemovalTime);
+  SideTone.begin(SidetoneVolume, SidetoneFrequency, WAVEFORM_SINE);               //Waveforms: SINE, PULSE, SAWTOOTH, SQUARE, TRIANGLE
+  // Envelope.delay(0);
+  // Envelope.attack(1);
+  // Envelope.hold(2);
+  // Envelope.decay(0);
+  // Envelope.sustain(1.0);
+  // Envelope.release(2);
 
   if (TeensyDebug) {
     #ifndef CONFIG_DEBUG
@@ -111,14 +127,19 @@ void setup() {
     Serial.printf("Teensy DNS: %u.%u.%u.%u\n", MyDNS[0], MyDNS[1], MyDNS[2], MyDNS[3]);
     Serial.printf("Flex IP: %u.%u.%u.%u\n", FlexIP[0], FlexIP[1], FlexIP[2], FlexIP[3]);
   }
-
-  FlexConnect();
-
-  FlexInit();
-
-  if (TeensyDebug){
-    Serial.println("Radio connected");
-  }
+  #ifndef NO_RADIO 
+    FlexConnect();
+    FlexInit();
+    if (TeensyDebug){
+      Serial.println("Radio connected");
+    }
+  #endif
+  #ifdef NO_RADIO
+    send_K(CommandFrequency, CommandSpeed);
+    SideTone.frequency(SidetoneFrequency);
+    SideTone.amplitude(SidetoneVolume);
+    SideToneFade.fadeOut(1);
+  #endif
 }
 /* END setup() */
 
@@ -157,7 +178,9 @@ void loop() {
         Serial.println("RX");
       }
       if (SidetoneActive) {
-        SideTone.amplitude(0);
+          SideToneFade.fadeOut(ClickRemovalTime);
+          // SideTone.amplitude(0.0);
+          // SideTone.frequency(0.0);
       }
     }
 //    else {
@@ -173,7 +196,7 @@ void loop() {
       SEQ++;
       PreviousKeying = true;
       if (SidetoneActive) {
-        SideTone.amplitude(SidetoneVolume);
+        SideToneFade.fadeIn(ClickRemovalTime);
       } 
       digitalWrite(BuiltInLED, HIGH);                                  // LED on
       if (TeensyDebug) {
@@ -182,6 +205,7 @@ void loop() {
     }
   }
 
+  #ifndef NO_RADIO 
   if (RadioTCPChannel.connected()) {
     if ( (ThisLoopTime-LastPingTime) > PingTimeInterval) {
       LastPingTime = ThisLoopTime;
@@ -196,12 +220,12 @@ void loop() {
     if (TeensyDebug) {
       Serial.println("Radio disconnected");
     }
-//    FlexConnected=false;
     FlexConnect();
     ConnectionHandle="";
     ClientHandle="";
     FlexInit();
   }
+  #endif
   LastLoopStatus=ThisLoopStatus;
 }
 /* END loop() */
@@ -284,7 +308,7 @@ void FlexInit() {
   }
   digitalWrite(BuiltInLED, LOW);
   SEQ=3;
-  send_K();
+  send_K(CommandFrequency, CommandSpeed);
 }
 /* END FlexInit() */
 
@@ -302,22 +326,33 @@ void FlexConnect() {
 }
 /* END FlexConnect() */
 
-void send_K() {                                                        // _._ at speed of 40WPM
-  SideTone.frequency(600.0);
-
+void send_K(float Freq, int Speed) {                                                        // _._ at speed of 40WPM
+  int DotLength          = 60000 / (50 * Speed);
+  int ElementSpaceLength = DotLength;
+  int DashLength         = DotLength * 3;
+  // int SpaceLength        = DotLength * 7;
+  SideTone.frequency(Freq);
+  SideToneFade.fadeOut(ClickRemovalTime);
   SideTone.amplitude(SidetoneVolume);
-  delay (90);
-  SideTone.amplitude(0.0);
-  delay (30);
-  SideTone.amplitude(SidetoneVolume);
-  delay (30);
-  SideTone.amplitude(0.0);
-  delay (30);
-  SideTone.amplitude(SidetoneVolume);
-  delay (90);
-  SideTone.amplitude(0.0);
-
+  SideToneFade.fadeIn(ClickRemovalTime);
+  delay (DashLength);
+  SideToneFade.fadeOut(ClickRemovalTime);
+  // SideTone.amplitude(0.0);
+  delay (ElementSpaceLength);
+  SideToneFade.fadeIn(ClickRemovalTime);
+  //SideTone.amplitude(SidetoneVolume);
+  delay (DotLength);
+  SideToneFade.fadeOut(ClickRemovalTime);
+  // SideTone.amplitude(0.0);
+  delay (ElementSpaceLength);
+  SideToneFade.fadeIn(ClickRemovalTime);
+  //SideTone.amplitude(SidetoneVolume);
+  delay (DashLength);
+  SideToneFade.fadeOut(ClickRemovalTime);
+  //SideTone.amplitude(0.0);
+  // Envelope.noteOff();
   SideTone.frequency(SidetoneFrequency);
+  //SideTone.amplitude(SidetoneVolume);
 }
 /* END send_K() */
 
